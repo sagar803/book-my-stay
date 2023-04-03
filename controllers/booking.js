@@ -1,5 +1,5 @@
 import Booking from "../models/Booking.js";
-import User from "../models/User.js";
+import Payment from "../models/Payments.js";
 
 export const getBooking = async (req, res) => {
     try {
@@ -73,7 +73,16 @@ export const createBooking = async (req, res) => {
         stay_category,
         cost
       });
-      await booking.save();
+      await booking.save()
+      
+      const payment = new Payment({
+        user_id : req.user._id,
+        check_in,
+        check_out,
+        cost, 
+        updated : false,
+      });
+      await payment.save()
   
       res.json({ booking });
     } catch (error) {
@@ -143,6 +152,15 @@ export const updateBooking = async (req, res) => {
       booking.stay_category = stay_category;
       booking.cost = cost;
       await booking.save();
+      
+      const payment = new Payment({
+        user_id : req.user._id,
+        check_in,
+        check_out,
+        cost, 
+        updated : true,
+      }) 
+      await payment.save()
   
       res.json({ booking , refundAmount});
     } catch (error) {

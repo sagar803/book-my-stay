@@ -4,6 +4,7 @@ import bodyParser from 'body-parser'
 import mongoose from 'mongoose'
 import authRoutes from "./routes/auth.js"
 import bookingRoutes from "./routes/booking.js"
+import paymentRoute from "./routes/payment.js"
 
 //CONFIGURATION
 dotenv.config();
@@ -13,6 +14,7 @@ app.use(bodyParser.json());
 // Define the routes
 app.use('/auth', authRoutes);
 app.use('/bookings', bookingRoutes);
+app.use('/payments' , paymentRoute);
 
 // Connect to the database
 mongoose.connect(process.env.MONGO_URL, {

@@ -1,0 +1,104 @@
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY0MjkyZTU2MjljYmM2YzVjMTNkNjgzYiIsImlhdCI6MTY4MDQyMTcxMn0.Xcxb_1DKo_L7RMGqCmu5GhCNq8n9AxUCyFDqTJzpIBw"
+}
+{
+  "email": "x@x.x",
+  "password": "x"
+}
+{
+  "check_in": "2023-04-03T05:00:00.000Z",
+  "check_out": "2023-04-05T12:00:00.000Z",
+  "food_category": "B",
+  "stay_category": "Z"
+}
+// testing
+const request = require('supertest');
+const app = require('./app');
+
+describe('Booking API', () => {
+  let authToken;
+  
+  beforeAll(async () => {
+    // Register a user and obtain an auth token
+    const response = await request(app)
+      .post('/register')
+      .send({
+        email: 'testuser@example.com',
+        password: 'password123'
+      });
+    authToken = response.body.token;
+  });
+  
+  describe('GET /bookings', () => {
+    it('should return an array of bookings', async () => {
+      const response = await request(app)
+        .get('/bookings')
+        .set('Authorization', authToken)
+        .expect('Content-Type', /json/)
+        .expect(200);
+      
+      expect(response.body.bookings).toBeInstanceOf(Array);
+    });
+    
+    it('should return a 401 status code if no auth token is provided', async () => {
+      const response = await request(app)
+        .get('/bookings')
+        .expect(401);
+    });
+  });
+  
+  describe('POST /bookings', () => {
+    it('should create a new booking', async () => {
+      const response = await request(app)
+        .post('/bookings')
+        .set('Authorization', authToken)
+        .send({
+          check_in: '2023-04-10',
+          check_out: '2023-04-15',
+          food_category: 'B',
+          stay_category: 'Y'
+        })
+        .expect('Content-Type', /json/)
+        .expect(201);
+      
+      expect(response.body).toHaveProperty('user_id');
+      expect(response.body).toHaveProperty('check_in');
+      expect(response.body).toHaveProperty('check_out');
+      expect(response.body).toHaveProperty('food_category');
+      expect(response.body).toHaveProperty('stay_category');
+      expect(response.body).toHaveProperty('cost');
+    });
+    
+    it('should return a 400 status code if the check-in date is in the past', async () => {
+      const response = await request(app)
+        .post('/bookings')
+        .set('Authorization', authToken)
+        .send({
+          check_in: '2022-12-01',
+          check_out: '2022-12-10',
+          food_category: 'A',
+          stay_category: 'X'
+        })
+        .expect('Content-Type', /json/)
+        .expect(400);
+      
+      expect(response.body.message).toBe('Invalid booking dates');
+    });
+    
+    it('should return a 400 status code if the check-out date is before the check-in date', async () => {
+      const response = await request(app)
+        .post('/bookings')
+        .set('Authorization', authToken)
+        .send({
+          check_in: '2023-04-10',
+          check_out: '2023-04-09',
+          food_category: 'A',
+          stay_category: 'X'
+        })
+        .expect('Content-Type', /json/)
+        .expect(400);
+      
+      expect(response.body.message).toBe('Invalid booking dates');
+    });
+  });
+});
